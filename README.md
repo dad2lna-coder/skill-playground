@@ -20,6 +20,7 @@ An agent working in another repo should read the matching `SKILL.md` before edit
 | [moonbase](skills/moonbase/SKILL.md) | Moonfin's Jellyfin/Emby server plugin |
 | [jellyfin-playback](skills/jellyfin-playback/SKILL.md) | Direct play vs transcode, device profiles, PlaybackInfo |
 | [jellyfin-server](skills/jellyfin-server/SKILL.md) | This server. Fill the card before changing it |
+| [moonfin-haos](skills/moonfin-haos/SKILL.md) | Thermostat, Frigate, or other HAOS devices inside Moonfin |
 
 ## Add a skill
 
@@ -32,5 +33,5 @@ An agent working in another repo should read the matching `SKILL.md` before edit
 ## Rules
 
 - Do not vendor Moonfin or Jellyfin source in this repo. Moonfin-Core is GPL-2.0; a distributed modified APK needs its source published with it.
-- Server facts live only in [skills/jellyfin-server/assets/server-card.md](skills/jellyfin-server/assets/server-card.md). Other skills read that card. They do not invent a Docker path, GPU, or version.
+- Jellyfin server facts live only in [skills/jellyfin-server/assets/server-card.md](skills/jellyfin-server/assets/server-card.md). HAOS facts live only in [skills/moonfin-haos/assets/haos-card.md](skills/moonfin-haos/assets/haos-card.md). Do not invent a URL, entity, GPU, or version.
 - If the environment has no Flutter, Android SDK, or .NET SDK, give the exact command and stop. Do not claim the APK or plugin was built.

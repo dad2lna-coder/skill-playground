@@ -9,4 +9,6 @@ When the task mentions Moonfin, an APK, Jellyfin, Moonbase, Seerr on Jellyfin, o
 3. Read `skills/jellyfin-server/assets/server-card.md` before any server change or playback diagnosis.
 4. If a card field is `unknown`, leave it unknown or ask. Do not fill it from a guess.
 
+Home Assistant, HAOS, Frigate, a thermostat, or a camera feed inside Moonfin: open `skills/moonfin-haos/SKILL.md` and no other integration skill. Read `skills/moonfin-haos/assets/haos-card.md` before naming a host or an entity.
+
 New skills go under `skills/<name>/` and get a row in `README.md`. The frontmatter `name` must match the directory name.
