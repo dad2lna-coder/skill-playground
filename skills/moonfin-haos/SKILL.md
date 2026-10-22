@@ -1,73 +1,60 @@
 ---
 name: moonfin-haos
 description: >
-  Add this household's Home Assistant OS to Moonfin. Use when the ask is a
-  thermostat, climate entity, Frigate feed, camera still, or any other HAOS
-  device inside the Moonfin APK. Covers the Moonbase proxy and the Flutter
-  screen. Do not use for ordinary Jellyfin playback.
+  Put this household's Home Assistant OS into Moonfin. Use for any HAOS entity
+  or feed they name (a thermostat or a Frigate camera is only an example):
+  state, service calls, stills, and live streams. HAOS shares the Jellyfin
+  server stack; TVs are on the home network; Tailscale covers everything else.
+  An integration on HAOS is acceptable.
 ---
 
 # Moonfin ↔ HAOS
 
-One feature, two repos. The APK never talks to Home Assistant.
+Read [assets/haos-card.md](assets/haos-card.md) first. `unknown` stays `unknown`. Open [references/ha-api.md](references/ha-api.md) only while writing the call.
 
-- Plugin: [Moonfin-Client/Plugin](https://github.com/Moonfin-Client/Plugin), Jellyfin side, next to `Jellyfin/backend/Api/SeerrProxyController.cs`.
-- Client: [Moonfin-Client/Moonfin-Core](https://github.com/Moonfin-Client/Moonfin-Core).
+Thermostat and Frigate were examples of two shapes (an entity, and a live feed). They are not the product boundary. The next entity they name is in scope. Something not on the card is not called until they add it.
 
-Read [assets/haos-card.md](assets/haos-card.md) before naming a URL, entity, or camera. `unknown` stays `unknown`. Read [references/ha-api.md](references/ha-api.md) only while writing the proxy or the screen.
+## This house
+
+- HAOS and Jellyfin are on the same server stack. Talk between them over localhost or the stack network. Do not plan a port forward, a cloud relay, or an HAOS ingress URL.
+- The TVs are on that same home network. A playable URL the TV opens directly is fine.
+- Tailscale is how devices off the house still reach the stack. A Tailscale client is reachable. Do not stop because it is not on house Wi-Fi, and do not build a video relay for it.
+- A custom integration on HAOS is acceptable. Prefer it. Do not avoid HAOS and stuff entity logic into the Flutter app.
+
+The address a TV already uses for Jellyfin is the host. Only the port changes. Do not invent a hostname. HA's usual port is 8123; confirm it, do not write it into the card as a fact until it is checked.
 
 ## Shape
 
-Moonbase already proxies Seerr at `Moonfin/Seerr` with `[Authorize]`, and stores the upstream secret on the server. Do the same for HA. Do not extend `SeerrProxyController`. Do not give the client a general `/api` pass-through: a Jellyfin login must not be able to open locks, run scripts, or call `shell_command`.
+Two pieces, not three:
 
-The proxy allowlist is plugin config, not a client argument:
+1. **Custom integration on HAOS.** It owns every HA call. It exposes only the entities and services listed on the card. It lives in `config/custom_components/`, not as a separate add-on, unless they ask for a separate process.
+2. **Moonfin client** in [Moonfin-Core](https://github.com/Moonfin-Client/Moonfin-Core). New screen under `lib/ui/screens/`, registered in `lib/ui/navigation/`. Not under `lib/ui/screens/seerr/`.
 
-- `climate.<id>` values from the card, and no other entity domain
-- Frigate camera names from the card, and no other names
+The TV already has a Jellyfin session. Keep that as the login. A thin route on [Moonbase](https://github.com/Moonfin-Client/Plugin) (`Jellyfin/backend/Api/`, beside `SeerrProxyController`, route `Moonfin/Ha`, `[Authorize]`) calls the HA integration on the stack and returns the result. The APK never holds an HA admin token and never calls HA itself.
 
-Call HA and Frigate from the Jellyfin host. HAOS ingress URLs work in the HA UI only. If the card has no LAN URL the Jellyfin host can reach, stop and ask.
+Do not extend `SeerrProxyController`. Do not proxy arbitrary `/api` paths. The card is the allowlist.
 
-The long-lived HA token lives in plugin config. It does not go in Dart, git, logs, or the card.
+Live bytes stay off that route. The integration returns a URL on this stack (home network or Tailscale) and the existing player opens it: `lib/playback/media3_player_backend.dart`, same path as `lib/ui/screens/livetv/live_tv_player_screen.dart`. No second player and no `flutter_webrtc` unless that URL cannot be played and they ask.
 
-## One slice at a time
+## One slice
 
-Finish one of these before starting the next: thermostat read, thermostat set, camera stills, camera live.
+Ship one entity or one feed before the next. Match the shape:
 
-### Plugin
-
-`Jellyfin/` only, unless the card says they also run Emby. Route `Moonfin/Ha`, `[Authorize]`, same idea as `SeerrProxyController`.
-
-| Slice | Upstream | Client receives |
+| They asked for | HA integration | What Moonfin shows |
 | --- | --- | --- |
-| Thermostat read | `GET /api/states/climate.<id>` | temperature, setpoint, `hvac_mode`, `hvac_action`. Nothing else. |
-| Thermostat set | `climate/set_temperature`, `climate/set_hvac_mode` | the updated state |
-| Stills | Frigate `GET /api/<camera>/latest.jpg` | the JPEG |
-| Live | no byte proxy | a password-free `rtsp://<frigate>:8554/<camera>` only if the card says this device is on that LAN |
+| An entity (thermostat, lock, sensor, …) | `GET /api/states/<entity_id>`, then only the service they named | State, and the one control |
+| A feed (Frigate or any other camera) | A still, plus one playable URL | Still on the row. Enter plays it |
 
-Reject every other entity and every other path.
+Return the fields the screen renders. Do not return raw `attributes`.
 
-If `frigate_url` is `unknown` and `ha_url` is set, stills may fall back to HA `GET /api/camera_proxy/<entity_id>` for a card-listed camera entity. Say that the image is the low-res proxy. Do not invent a Frigate host.
-
-Live video from off the LAN: stop. Do not build a relay, and do not switch to go2rtc HLS (`/api/stream.m3u8` is a poor, non-standard fallback).
-
-### Client
-
-New screen under `lib/ui/screens/`, registered in `lib/ui/navigation/`. Not under `lib/ui/screens/seerr/`.
-
-The screen calls the signed-in Jellyfin origin only.
-
-Stills are images. Refresh on the camera screen, not from the home row on a timer that runs all day.
-
-Live playback goes through the existing Android backend `lib/playback/media3_player_backend.dart`, the same path `lib/ui/screens/livetv/live_tv_player_screen.dart` uses (`Media3 (ExoPlayer)`). Do not add `flutter_webrtc` or a second player.
-
-TV (`androidTv` flavor, `MOONFIN_FORCE_TV`): D-pad. Setpoint is up/down on the focused control. HVAC mode is a focused list. A still opens live on enter. A phone-only layout is not done.
+TV (`androidTv`, `MOONFIN_FORCE_TV`): D-pad. One focused control. A still opens playback on enter. Phone layout alone is not done.
 
 ## Build
 
-Do not claim either build ran unless it did.
+Do not claim a build ran unless it did.
 
 ```bash
-# plugin, from Plugin/
+# Moonbase, from Plugin/ — only if this slice adds the route
 cd Jellyfin && ./build.sh <version> <targetABI>
 dotnet test Jellyfin/tests/Moonfin.Server.Tests/Moonfin.Server.Tests.csproj
 
@@ -79,13 +66,13 @@ flutter build apk --release --flavor androidTv \
   --dart-define=DISTRIBUTION_CHANNEL=android_tv_apk
 ```
 
-Flutter pin and signing failures: `skills/moonfin-android`. Plugin SDK and zip path: `skills/moonbase`. This skill is the integration. Those two are only the toolchain.
+Toolchain pins: `skills/moonfin-android` and `skills/moonbase`. This skill is the integration.
 
 Moonfin-Core is GPL-2.0. A distributed modified APK needs its source.
 
 ## Done when
 
-- An allowlisted climate read returns the state, and a `lock.*` or any id not on the card is rejected.
-- The token is not in the client binary, the response, or the card.
-- The Flutter screen never uses the HA host.
-- `dotnet test` and `flutter analyze` / `flutter test` passed, or the missing toolchain was stated instead of a fake pass.
+- The new entity or feed is on the card, and a call for anything not on the card is rejected.
+- No HA admin token in the APK, the response, git, or the card.
+- The TV uses its existing Jellyfin login. Playback uses the existing Media3 backend.
+- Tests passed, or the missing toolchain was named instead of a fake pass.

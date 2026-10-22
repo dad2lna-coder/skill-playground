@@ -1,19 +1,17 @@
 # HAOS card
 
-Fill this in. Leave unknown fields as `unknown`. Do not guess.
+Known facts are filled in. Leave the rest `unknown`. Do not guess a hostname, port, entity, or camera.
 
-Never put the long-lived access token, a camera password, or any other secret in this file. The token stays in Moonbase plugin config.
+No tokens, camera passwords, or other secrets in this file.
 
 ```yaml
-ha_url: unknown                 # LAN base the Jellyfin host can reach, no ingress path
-frigate_url: unknown            # LAN base for the Frigate HTTP API, usually :5000
-frigate_rtsp: unknown           # host:8554 the TV can open, or unreachable
-frigate_install: unknown        # ha-addon | separate
-clients_on_lan: unknown         # yes | no | mixed
-emby: no
-climate: []                     # climate.downstairs, ...
-cameras: []                     # Frigate camera names
-camera_entities: []             # camera.front, only if frigate_url is unknown
-ha_token_stored: unknown        # yes once it is in plugin config, never the token
-notes: ""
+placement: same-stack          # HAOS and Jellyfin on the same server stack
+tv_network: home               # TVs are on that home network
+remote_access: tailscale       # off-site devices reach the stack this way
+ha_integration: yes            # a custom integration on HAOS is acceptable
+ha_url: unknown                # same host the TVs use for Jellyfin; port unconfirmed
+jellyfin_url: unknown
+entities: []                   # domain.object they asked for. Examples are not entries.
+feeds: []                      # camera or stream names they asked for
+notes: "Thermostat and Frigate were examples of an entity and a feed, not the scope."
 ```

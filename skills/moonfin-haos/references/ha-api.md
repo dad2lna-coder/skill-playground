@@ -1,56 +1,37 @@
-# HA and Frigate calls
+# Calls the HA integration makes
 
-The plugin makes these. The APK does not. Send `Authorization: Bearer <token>` to HA only.
+Moonfin does not make these. The integration on HAOS does. `Authorization: Bearer` is an HA admin token and stays inside HAOS.
 
-## Climate
-
-```http
-GET /api/states/climate.<id>
-```
-
-Use `attributes.current_temperature`, `attributes.temperature` (the setpoint; some devices use `target_temp_high` / `target_temp_low`), `state` (the mode: `heat`, `cool`, `heat_cool`, `off`, …), and `attributes.hvac_action` when present. Drop the rest. Do not return `attributes` whole.
+## Entity
 
 ```http
-POST /api/services/climate/set_temperature
-{"entity_id":"climate.<id>","temperature":72}
-
-POST /api/services/climate/set_hvac_mode
-{"entity_id":"climate.<id>","hvac_mode":"heat"}
+GET /api/states/<entity_id>
+POST /api/services/<domain>/<service>
+{"entity_id":"<entity_id>", ...only the fields that service requires}
 ```
 
-`hvac_mode` must be one of that entity's `attributes.hvac_modes`. Reject anything else before the call.
+Example, a thermostat: `climate.set_temperature` with `temperature`, or `climate.set_hvac_mode` with a mode already in `attributes.hvac_modes`. Read `current_temperature`, the setpoint, `state`, and `hvac_action`. Drop the rest.
 
-Polling: the thermostat screen may poll the proxy every 15 seconds while it is open. No background poll. A websocket subscription is a later slice, not this one.
+The same two calls fit a lock, a switch, a cover, or a sensor. The service name comes from the ask, not from this file. If they did not name a service, the slice is read-only.
 
-## Frigate
+Poll every 15 seconds while the screen is open. No background poll.
 
-Camera name is the Frigate camera name, which is also the go2rtc stream name when they match.
+## Feed
+
+Frigate is the example, not the only camera.
 
 ```http
 GET /api/<camera>/latest.jpg
-GET /api/events?camera=<camera>&limit=20
 ```
 
-Live, played by ExoPlayer on the device, not proxied:
+Playable URL, opened by ExoPlayer on the TV, home network or Tailscale:
 
 ```text
-rtsp://<frigate-host>:8554/<camera>
+rtsp://<this-stack>:8554/<camera>
 ```
 
-That restream has no camera password. If the only URL on the card still has `user:pass@`, stop and say so. Do not embed those credentials in the client.
+Use it when the camera name is also the go2rtc stream name. No camera password in the URL. If the only URL still has `user:pass@`, stop.
 
-HA still fallback, only when `frigate_url` is unknown:
+If there is no Frigate base on the card, a still can be HA `GET /api/camera_proxy/<entity_id>`. That image is low resolution. Say so. Do not invent a Frigate host.
 
-```http
-GET /api/camera_proxy/camera.<id>
-```
-
-JPEG, low resolution. Not a live stream.
-
-## Not these
-
-- HA ingress (`/api/hassio_ingress/...`)
-- go2rtc HLS `http://<host>:1984/api/stream.m3u8?src=<camera>`
-- WebRTC port 8555
-- jsmpeg detect stream
-- Any HA domain other than `climate`, plus the camera still path above
+Do not use HAOS ingress, go2rtc HLS (`:1984/api/stream.m3u8`), or the jsmpeg detect stream.

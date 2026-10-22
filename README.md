@@ -20,7 +20,7 @@ An agent working in another repo should read the matching `SKILL.md` before edit
 | [moonbase](skills/moonbase/SKILL.md) | Moonfin's Jellyfin/Emby server plugin |
 | [jellyfin-playback](skills/jellyfin-playback/SKILL.md) | Direct play vs transcode, device profiles, PlaybackInfo |
 | [jellyfin-server](skills/jellyfin-server/SKILL.md) | This server. Fill the card before changing it |
-| [moonfin-haos](skills/moonfin-haos/SKILL.md) | Thermostat, Frigate, or other HAOS devices inside Moonfin |
+| [moonfin-haos](skills/moonfin-haos/SKILL.md) | Any HAOS entity or feed inside Moonfin |
 
 ## Add a skill
 
