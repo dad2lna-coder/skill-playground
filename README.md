@@ -21,6 +21,7 @@ An agent working in another repo should read the matching `SKILL.md` before edit
 | [jellyfin-playback](skills/jellyfin-playback/SKILL.md) | Direct play vs transcode, device profiles, PlaybackInfo |
 | [jellyfin-server](skills/jellyfin-server/SKILL.md) | This server. Fill the card before changing it |
 | [moonfin-haos](skills/moonfin-haos/SKILL.md) | Any HAOS entity or feed inside Moonfin |
+| power-platform/* | Microsoft Power Platform skills (Power Pages, model apps, canvas apps, Power Automate, PCF, MCP apps, mobile, etc.) copied from microsoft/power-platform-skills. See `skills/power-platform/` |
 
 ## Add a skill
 
@@ -35,3 +36,9 @@ An agent working in another repo should read the matching `SKILL.md` before edit
 - Do not vendor Moonfin or Jellyfin source in this repo. Moonfin-Core is GPL-2.0; a distributed modified APK needs its source published with it.
 - Jellyfin server facts live only in [skills/jellyfin-server/assets/server-card.md](skills/jellyfin-server/assets/server-card.md). HAOS facts live only in [skills/moonfin-haos/assets/haos-card.md](skills/moonfin-haos/assets/haos-card.md). Do not invent a URL, entity, GPU, or version.
 - If the environment has no Flutter, Android SDK, or .NET SDK, give the exact command and stop. Do not claim the APK or plugin was built.
+
+## Power Platform skills
+
+The `skills/power-platform/` tree contains SKILL.md files from [microsoft/power-platform-skills](https://github.com/microsoft/power-platform-skills), organized by plugin. These are the open Agent Skills format and can be used with Gemini, ChatGPT/Codex, Claude, Copilot, etc.
+
+Note: many of these skills assume Power Platform CLI (`pac`), MCP servers, and local tooling that is available in GitHub Copilot CLI / Claude Code plugin environments. In pure chat interfaces they primarily provide strong instructional workflows.
